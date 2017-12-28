@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+   <head>
+   <link rel="stylesheet" type="text/css" href="css/style.css">
+      <title>Question World</title>
+      <script src = "https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+   </head>
+   
+   
+    <script>
+      var socket = io();
+      var user;
+
+      var loginFormHtml = '<div id="login_form_div">\
+         <form name="loginform" id = "login_form" method="post">\
+         <label for="title">Name : </label><input type = "text" class = "input_class" id = "user_name" name="user_name">\
+         <label for="title">Password : </label> <input type = "password" class = "input_class" id = "password" name="password">\
+         <br /><button type = "button" class = "input_class" onclick = "loginUser()">Send</button>\
+         </form> </div>';
+
+
+      var validUserHtml = '<div id="div1" class="template">page1</div><div id="div2" class="template">page2</div><div id="div3" class="template">page3</div><div id="div4"  class="template">page4</div><div id="div5"  class="template">page5</div><div id="div6"  class="template">page6</div><div id="div7" class="template">page7</div><div id="div8"  class="template">page8</div>';
+
+      socket.on('alluser', function(data) {
+         document.getElementById('admin_area').innerHTML =loginFormHtml;
+      });
+
+
+
+      function loginUser() {
+         var formdata = document.getElementById("login_form").elements;
+         var login_data ={};
+         for(var i = 0 ; i < formdata.length ; i++){
+            var item = formdata.item(i);
+            login_data[item.name] = item.value;
+         }
+         socket.emit('user_detail', {
+            user_name : login_data.user_name,
+            password: login_data.password
+         });
+         // document.getElementById("login_form").reset();
+      }
+      socket.on('validuser', function(data) {
+         // console.log(data[0].user_name);
+         var d = new Date();
+         d.setTime(d.getTime() + (369 * 24 * 60 * 60 * 1000));
+         var expires = "expires="+d.toUTCString();
+         document.cookie = "is_admin" + "=" + data[0].is_admin + ";" + 365 + ";path=/";
+         if(data[0].is_admin == 1) {
+            document.getElementById('admin_area').innerHTML =validUserHtml;
+         }else {
+            document.getElementById('admin_area').innerHTML =validUserHtml;
+         }
+      });
+      
+      $(document).on("click", '.template', function() {
+         var is_admin = getCookie("is_admin");
+         // alert(admin_name);
+         if(is_admin == 0) {
+            return false;
+         }
+         var currentId = this.id;
+         socket.emit('clicked_div', {
+            currentId : this.id
+         });
+      });
+
+      socket.on('current_div', function(data) {
+         console.log(data);
+         document.getElementById('user_area').innerHTML = document.getElementById(data+"_data").innerHTML;
+      });
+
+      function saveMe() {
+         var formdata = document.getElementById("user_form").elements;
+         var question_data ={};
+         for(var i = 0 ; i < formdata.length ; i++){
+            var item = formdata.item(i);
+            question_data[item.name] = item.value;
+         }
+         socket.emit('question_data', {
+            name : question_data.name,
+            phone: question_data.phone,
+            address: question_data.address
+         });
+      }
+      
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+   
+   </script>
+   
+   <body>
+   <div id="admin_area"></div>
+   <div id="user_area"></div>
+   <div id="div1_data">Hello this is First page</div>
+   <div id="div2_data">Hello this is Second page</div>
+   <div id="div3_data"><form name="user_form" id = "user_form" method="post">
+            <label for="title">Name : </label><input type = "text" class = "input_class" id = "name" name="name"><br />
+            <label for="title">Phone : </label><input type = "text" class = "input_class" id = "phone" name="phone"><br />
+            <label for="title">Address : </label><input type = "text" class = "input_class" id = "address" name="address">
+            <br /><button type = "button" class = "input_class" onclick = "saveMe()">Submit</button>
+         </form></div>
+   <div id="div4_data">Hello this is Forth page</div>
+   <div id="div5_data">Hello this is Fifth page</div>
+   <div id="div6_data">Hello this is Sixth page</div>
+   <div id="div7_data">Hello this is Seventh page</div>
+   <div id="div8_data">Hello this is Eights page</div>
+
+</html>
