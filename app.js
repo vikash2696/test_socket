@@ -32,11 +32,6 @@ app.get('/', function(req, res) {
 users = [];
 io.on('connection', function(socket) {
 
-  //Get all records 
-
-  
-      socket.emit('alluser',"true");
-
       socket.on('user_detail', function(data) {
           //fetch user data
           Users.find({'user_name':data.user_name, 'password': data.password},function(err,users){
@@ -44,18 +39,27 @@ io.on('connection', function(socket) {
                     return false;
                 }
                 if(users.length > 0){
-                  socket.emit('validuser',users);
-                  console.log("valid");
+                  socket.emit('loggedInuser',{is_new_user: "no", user: users});
+
                 }else{
-                  console.log("invalid user");
-                  return false;
+                     var createUserdata = { 
+                      user_name: data.user_name,
+                      password: data.password,
+                      is_admin:'0'
+                      };
+                     Users.create(createUserdata ,function(err,savedUser){
+                        if(err) {
+                           return  false;
+                        }
+
+                        socket.emit('loggedInuser',{is_new_user: "yes", user: savedUser});
+                     });
                 }
             });
 
       });
 
       socket.on('clicked_div', function(data) {
-          console.log(data.currentId);
           io.sockets.emit('current_div',data.currentId);
 
       });
@@ -72,7 +76,7 @@ io.on('connection', function(socket) {
             if(err) {
                return  false;
             }
-            socket.emit('newquestion',savedquestion);
+            io.sockets.emit('question_submit',savedquestion);
             return true;
          });  
     });

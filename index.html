@@ -2,7 +2,7 @@
 <html>
    <head>
    <link rel="stylesheet" type="text/css" href="css/style.css">
-      <title>Question World</title>
+      <title>Test Socket</title>
       <script src = "https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
    </head>
@@ -20,12 +20,28 @@
          </form> </div>';
 
 
-      var validUserHtml = '<div id="div1" class="template">page1</div><div id="div2" class="template">page2</div><div id="div3" class="template">page3</div><div id="div4"  class="template">page4</div><div id="div5"  class="template">page5</div><div id="div6"  class="template">page6</div><div id="div7" class="template">page7</div><div id="div8"  class="template">page8</div>';
+      var validUserHtml = '<button id="exit_btn" onclick="logout();">Exit</button><div id="user_submitted_area"><button hidden class="clear_btn_class" onclick="clearData();">Clear</button></div><div id="div1" class="template">1</div><div id="div2" class="template">2</div><div id="div3" class="template">3</div><div id="div4"  class="template">4</div><div id="div5"  class="template">5</div><div id="div6" class="template">6</div><div id="div7" class="template">7</div><div id="div8" class="template">8</div><div id="user_name_area"></div>';
 
-      socket.on('alluser', function(data) {
-         document.getElementById('admin_area').innerHTML =loginFormHtml;
-      });
 
+        function reLoadFunction() {
+            var is_loggedIn = getCookie("is_loggedIn");
+            var user_name = getCookie("user_name");
+            // console.log("kakak"+is_loggedIn);
+            if(is_loggedIn == 'yes') {
+               document.getElementById("user_area").style.visibility = "visible";
+               document.getElementById('admin_area').innerHTML =validUserHtml;
+               document.getElementById('user_name_area').innerHTML = "Hi "+user_name;
+            }else {
+               document.getElementById("user_area").style.visibility = "hidden";
+                document.getElementById('admin_area').innerHTML =loginFormHtml;
+             }
+         }
+
+         function logout() {
+            deleteAllCookies();
+            document.getElementById('admin_area').innerHTML =loginFormHtml;
+            document.getElementById("user_area").style.visibility = "hidden";
+         }
 
 
       function loginUser() {
@@ -41,22 +57,33 @@
          });
          // document.getElementById("login_form").reset();
       }
-      socket.on('validuser', function(data) {
-         // console.log(data[0].user_name);
+
+      socket.on('loggedInuser', function(data) {
+         if(data.is_new_user == 'yes') {
+            var is_admin = data.user.is_admin;
+            var user_name = data.user.user_name;
+         }else {
+            var is_admin = data.user[0].is_admin;
+            var user_name = data.user[0].user_name;
+         }
          var d = new Date();
          d.setTime(d.getTime() + (369 * 24 * 60 * 60 * 1000));
          var expires = "expires="+d.toUTCString();
-         document.cookie = "is_admin" + "=" + data[0].is_admin + ";" + 365 + ";path=/";
-         if(data[0].is_admin == 1) {
+         document.cookie = "is_admin" + "=" + is_admin + ";" + 365 + ";path=/";
+         document.cookie = "user_name" + "=" + user_name + ";" + 365 + ";path=/";
+         document.cookie = "is_loggedIn" + "=" + "yes" + ";" + 365 + ";path=/";
+         document.getElementById("user_area").style.visibility = "visible";
+         if(is_admin == 1) {
             document.getElementById('admin_area').innerHTML =validUserHtml;
+            document.getElementById('user_name_area').innerHTML = "Hi "+user_name;
          }else {
             document.getElementById('admin_area').innerHTML =validUserHtml;
+            document.getElementById('user_name_area').innerHTML = "Hi "+user_name;
          }
       });
       
       $(document).on("click", '.template', function() {
          var is_admin = getCookie("is_admin");
-         // alert(admin_name);
          if(is_admin == 0) {
             return false;
          }
@@ -67,7 +94,7 @@
       });
 
       socket.on('current_div', function(data) {
-         console.log(data);
+         
          document.getElementById('user_area').innerHTML = document.getElementById(data+"_data").innerHTML;
       });
 
@@ -84,47 +111,71 @@
             address: question_data.address
          });
       }
+
+      socket.on('question_submit', function(data) {
+         var is_admin = getCookie("is_admin");
+         var user_name = getCookie("user_name");
+         if(is_admin == 1) {
+            document.getElementById('user_submitted_area').innerHTML += '<div><b>' + 
+               user_name + '</b> : ' + data.name + ' ,' + data.phone + '</div>';
+         }
+         
+      });
+
+
+
       
-function getCookie(cname) {
-    var name = cname + "=";
-    var ca = document.cookie.split(';');
-    for(var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-    return "";
-}
+      function getCookie(cname) {
+          var name = cname + "=";
+          var ca = document.cookie.split(';');
+          for(var i = 0; i < ca.length; i++) {
+              var c = ca[i];
+              while (c.charAt(0) == ' ') {
+                  c = c.substring(1);
+              }
+              if (c.indexOf(name) == 0) {
+                  return c.substring(name.length, c.length);
+              }
+          }
+          return "";
+      }
 
-function setCookie(cname, cvalue, exdays) {
-    var d = new Date();
-    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    var expires = "expires="+d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
+      function setCookie(cname, cvalue, exdays) {
+          var d = new Date();
+          d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+          var expires = "expires="+d.toUTCString();
+          document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+      }
 
-   
+      function deleteAllCookies() {
+          var cookies = document.cookie.split(";");
+
+          for (var i = 0; i < cookies.length; i++) {
+              var cookie = cookies[i];
+              var eqPos = cookie.indexOf("=");
+              var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
+      }
+
+ 
    </script>
    
-   <body>
+   <body onload="reLoadFunction()">
    <div id="admin_area"></div>
-   <div id="user_area"></div>
-   <div id="div1_data">Hello this is First page</div>
-   <div id="div2_data">Hello this is Second page</div>
-   <div id="div3_data"><form name="user_form" id = "user_form" method="post">
-            <label for="title">Name : </label><input type = "text" class = "input_class" id = "name" name="name"><br />
+   <div  id="user_area"></div>
+   <div class="hidden" id="div1_data">Hello this is First page</div>
+   <div class="hidden" id="div2_data">Hello this is Second page</div>
+   <div class="hidden" id="div3_data"><form name="user_form" id = "user_form" method="post">
+            <label for="title">Where do you live : </label><input type = "text" class = "input_class" id = "name" name="name"><br />
             <label for="title">Phone : </label><input type = "text" class = "input_class" id = "phone" name="phone"><br />
             <label for="title">Address : </label><input type = "text" class = "input_class" id = "address" name="address">
             <br /><button type = "button" class = "input_class" onclick = "saveMe()">Submit</button>
          </form></div>
-   <div id="div4_data">Hello this is Forth page</div>
-   <div id="div5_data">Hello this is Fifth page</div>
-   <div id="div6_data">Hello this is Sixth page</div>
-   <div id="div7_data">Hello this is Seventh page</div>
-   <div id="div8_data">Hello this is Eights page</div>
+   <div class="hidden" id="div4_data">Hello this is Forth page</div>
+   <div class="hidden" id="div5_data">Hello this is Fifth page</div>
+   <div class="hidden" id="div6_data">Hello this is Sixth page</div>
+   <div class="hidden" id="div7_data">Hello this is Seventh page</div>
+   <div class="hidden" id="div8_data">Hello this is Eights page</div>
 
 </html>
