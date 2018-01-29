@@ -6,11 +6,10 @@
       <script src = "https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
    </head>
-   
-   
     <script>
       var socket = io();
       var user;
+      var Header = '';
 
       var loginFormHtml = '<div id="login_form_div">\
          <form name="loginform" id = "login_form" method="post">\
@@ -20,25 +19,32 @@
          </form> </div>';
 
 
-      var validUserHtml = '<button id="exit_btn" onclick="logout();">Exit</button><div id="user_submitted_area"><button hidden class="clear_btn_class" onclick="clearData();">Clear</button></div><div id="div1" class="template">1</div><div id="div2" class="template">2</div><div id="div3" class="template">3</div><div id="div4"  class="template">4</div><div id="div5"  class="template">5</div><div id="div6" class="template">6</div><div id="div7" class="template">7</div><div id="div8" class="template">8</div><div id="user_name_area"></div>';
+      var validUserHtml = '<button id="exit_btn" onclick="logout();">Exit</button><div id="user_submitted_area"><button hidden class="clear_btn_class" onclick="clearData();">Clear</button></div><div id="div1" class="template">1</div><div id="div2" class="template">2</div><div id="div3" class="template">3</div><div id="div4"  class="template">4</div><div id="div5"  class="template">5</div><div id="div6" class="template">6</div><div id="div7" class="template">7</div><div id="div8" class="template">8</div>';
 
 
+
+        // document.getElementById('header').innerHTML =Header;
         function reLoadFunction() {
+            
             var is_loggedIn = getCookie("is_loggedIn");
             var user_name = getCookie("user_name");
-            // console.log("kakak"+is_loggedIn);
             if(is_loggedIn == 'yes') {
-               document.getElementById("user_area").style.visibility = "visible";
-               document.getElementById('admin_area').innerHTML =validUserHtml;
-               document.getElementById('user_name_area').innerHTML = "Hi "+user_name;
+              document.getElementById("login_btn").innerHTML = "Hi "+user_name;
+              document.getElementById("user_area").style.visibility = "visible";
+              document.getElementById('admin_area').innerHTML =validUserHtml;
             }else {
-               document.getElementById("user_area").style.visibility = "hidden";
-                document.getElementById('admin_area').innerHTML =loginFormHtml;
+              document.getElementById("user_area").style.visibility = "hidden";
+              // document.getElementById('admin_area').innerHTML =loginFormHtml;
              }
+         }
+
+         function loginAction() {
+            document.getElementById('admin_area').innerHTML =loginFormHtml;
          }
 
          function logout() {
             deleteAllCookies();
+            document.getElementById("login_btn").innerHTML = "Login";
             document.getElementById('admin_area').innerHTML =loginFormHtml;
             document.getElementById("user_area").style.visibility = "hidden";
          }
@@ -59,6 +65,7 @@
       }
 
       socket.on('loggedInuser', function(data) {
+        console.log(data);
          if(data.is_new_user == 'yes') {
             var is_admin = data.user.is_admin;
             var user_name = data.user.user_name;
@@ -66,6 +73,7 @@
             var is_admin = data.user[0].is_admin;
             var user_name = data.user[0].user_name;
          }
+         document.getElementById("login_btn").innerHTML = "Hi "+user_name;
          var d = new Date();
          d.setTime(d.getTime() + (369 * 24 * 60 * 60 * 1000));
          var expires = "expires="+d.toUTCString();
@@ -122,9 +130,6 @@
          
       });
 
-
-
-      
       function getCookie(cname) {
           var name = cname + "=";
           var ca = document.cookie.split(';');
@@ -160,22 +165,31 @@
 
  
    </script>
-   
-   <body onload="reLoadFunction()">
-   <div id="admin_area"></div>
-   <div  id="user_area"></div>
-   <div class="hidden" id="div1_data">Hello this is First page</div>
-   <div class="hidden" id="div2_data">Hello this is Second page</div>
-   <div class="hidden" id="div3_data"><form name="user_form" id = "user_form" method="post">
-            <label for="title">Where do you live : </label><input type = "text" class = "input_class" id = "name" name="name"><br />
-            <label for="title">Phone : </label><input type = "text" class = "input_class" id = "phone" name="phone"><br />
-            <label for="title">Address : </label><input type = "text" class = "input_class" id = "address" name="address">
-            <br /><button type = "button" class = "input_class" onclick = "saveMe()">Submit</button>
-         </form></div>
-   <div class="hidden" id="div4_data">Hello this is Forth page</div>
-   <div class="hidden" id="div5_data">Hello this is Fifth page</div>
-   <div class="hidden" id="div6_data">Hello this is Sixth page</div>
-   <div class="hidden" id="div7_data">Hello this is Seventh page</div>
-   <div class="hidden" id="div8_data">Hello this is Eights page</div>
+  <body onload="reLoadFunction()" class="body_class">
+      <div class="header">
+        <span class="nav_link" id="login_btn" onclick="loginAction()";>Login</span>
+        <span class="nav_link" onclick="accountAction()";>My Account</span>
+        <span class="nav_link" onclick="aboutAction()";>About Us</span>
+        <span class="nav_link" onclick="homeAction()";>Home</span>
+      </div>
+      <div id="admin_area"></div>
+  
+      <div  id="user_area"></div>
+     <!--  <div class="dashboard"><p>This is Dashboard</p></div> -->
 
+     <div class="hidden" id="div1_data">Hello this is First page</div>
+     <div class="hidden" id="div2_data">Hello this is Second page</div>
+     <div class="hidden" id="div3_data"><form name="user_form" id = "user_form" method="post">
+              <label for="title">Where do you live : </label><input type = "text" class = "input_class" id = "name" name="name"><br />
+              <label for="title">Phone : </label><input type = "text" class = "input_class" id = "phone" name="phone"><br />
+              <label for="title">Address : </label><input type = "text" class = "input_class" id = "address" name="address">
+              <br /><button type = "button" class = "input_class" onclick = "saveMe()">Submit</button>
+           </form></div>
+     <div class="hidden" id="div4_data">Hello this is Forth page</div>
+     <div class="hidden" id="div5_data">Hello this is Fifth page</div>
+     <div class="hidden" id="div6_data">Hello this is Sixth page</div>
+     <div class="hidden" id="div7_data">Hello this is Seventh page</div>
+     <div class="hidden" id="div8_data">Hello this is Eights page</div>
+     <!-- <div class="footer"></div> -->
+  </body>
 </html>

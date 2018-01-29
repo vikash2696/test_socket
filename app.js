@@ -24,6 +24,7 @@ mongoose.connection.on('error', err => {
 
 var Users = require('./service/userService');
 var Questions = require('./service/questionService');
+var Pages = require('./service/pageService');
 
 app.get('/', function(req, res) {
    res.sendfile('index.html');
@@ -39,8 +40,15 @@ io.on('connection', function(socket) {
                     return false;
                 }
                 if(users.length > 0){
-                  socket.emit('loggedInuser',{is_new_user: "no", user: users});
+                  //get pagecount created by logged in user
+                    Pages.count({'author':users[0].user_name},function(err,pageCount){
+                    if(err) {
+                        return false;
+                    }
+                    console.log(users[0].user_name);
 
+                    socket.emit('loggedInuser',{is_new_user: "no", user: users , pageCount:pageCount});
+                  });
                 }else{
                      var createUserdata = { 
                       user_name: data.user_name,
